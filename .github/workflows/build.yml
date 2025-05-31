@@ -1,0 +1,29 @@
+name: Build Test Version
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-2019
+    strategy:
+      matrix:
+        platform: [Win32, x64]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1.1
+      - name: Patch ntsecapi.h
+        shell: pwsh
+        run: |
+          $path = "C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Include\ntsecapi.h"
+          (Get-Content $path) -replace '^RtlDecryptMemory\($', '__stdcall RtlDecryptMemory(' | Set-Content $path
+      - name: Build ${{ matrix.platform }}
+        run: msbuild mimikatz.sln /m /p:Configuration=Release /p:Platform=${{ matrix.platform }}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: mimikatz-${{ matrix.platform }}
+          path: ${{ matrix.platform }}\*
