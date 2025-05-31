@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        platform: [Win32, x64]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1.1
+    - name: Build
+      run: msbuild mimikatz.sln /m /p:Configuration=Release /p:Platform=${{ matrix.platform }}
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3.1.3
+      with:
+        name: mimikatz-${{ matrix.platform }}
+        path: ${{ matrix.platform }}/**/*
